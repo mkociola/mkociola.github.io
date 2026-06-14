@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Design tokens — ported verbatim from "Boot TUI.dc.html".
+ * Defining colors/fonts in @theme exposes them both as Tailwind
+ * utilities (bg-card, text-acc, border-edge, font-mono…) and as
+ * CSS variables (var(--color-acc)) for the few data-driven inline
+ * styles the terminal needs.
+ * ------------------------------------------------------------------ */
+@theme {
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Space Grotesk", system-ui, -apple-system, sans-serif;
+
+  /* surfaces */
+  --color-page: #060a07;        /* html/body backdrop */
+  --color-shell: #0b0e0c;       /* main page surface */
+  --color-card: #0a0f0a;        /* terminal card */
+  --color-titlebar: #0d140e;    /* card title bar */
+  --color-panel: #0e120f;       /* project cards */
+
+  /* foreground / accents */
+  --color-ink: #dce8de;
+  --color-acc: #33ff66;
+  --color-dim: #557a5e;
+  --color-txt: #b9d4bf;
+  --color-wht: #e9f7ee;
+  --color-amb: #ffd866;
+  --color-err: #ff6b6b;
+  --color-grn2: #7ee0a3;
+  --color-faint: #44604c;
+  --color-muted: #7e9b84;
+  --color-heading: #eef7f0;
+  --color-body: #aac3af;
+
+  /* borders */
+  --color-edge: #1a211b;
+  --color-edge-card: #1e2f22;
+  --color-edge-soft: #18261b;
+  --color-edge-chip: #243227;
+  --color-edge-chip-strong: #2a3a2c; /* the lighter chip border used on header/hero CTAs */
+  --color-edge-panel: #1d251e;
+
+  /* motion */
+  --animate-blink: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-page);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  ::selection { background: #33ff66; color: #06140a; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #1d2b20; border-radius: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  input { outline: none; }
+
+  /* The terminal is mounted as a client:only island; let its own root box
+     participate directly in the page layout so it fills the sizing wrapper. */
+  astro-island { display: contents; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
