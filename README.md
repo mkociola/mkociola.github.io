@@ -1,5 +1,7 @@
 # mateusz@kociola — personal portfolio
 
+[![Deploy to GitHub Pages](https://github.com/mkociola/mkociola.github.io/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/mkociola/mkociola.github.io/actions/workflows/deploy.yml)
+
 My personal site, "termfolio": a clean, crawlable page for humans and search
 engines at [`/`](https://mkociola.github.io), and an interactive boot-sequence
 terminal UI at [`/TUI`](https://mkociola.github.io/TUI). A lightweight bot-guard
