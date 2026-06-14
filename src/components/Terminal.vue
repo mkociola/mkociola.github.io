@@ -132,6 +132,23 @@ const inputA = ref<HTMLInputElement | null>(null);
 const previewRef = ref<HTMLElement | null>(null);
 const bootRef = ref<HTMLElement | null>(null);
 
+// ---- responsive: desktop three-pane vs mobile split-view -----------------
+// The terminal route renders the desktop "Boot TUI" three-pane layout at
+// ≥768px, and the "Split view" mobile TUI below it (per design_handoff_mobile_tui):
+// the file tree reflows into a horizontal chip rail and the preview + shell
+// stack so both stay visible at once. Both layouts are the same component over
+// the same state — only the template differs — so switching is a pure re-render.
+const MOBILE_MQ = '(max-width: 767px)';
+const isMobile = ref(
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(MOBILE_MQ).matches
+    : false,
+);
+let mql: MediaQueryList | null = null;
+function onMqChange(e: MediaQueryListEvent) {
+  isMobile.value = e.matches;
+}
+
 let timers: ReturnType<typeof setTimeout>[] = [];
 let booted = false;
 let entered = false;
@@ -213,6 +230,9 @@ function runBoot() {
 }
 
 onMounted(() => {
+  mql = window.matchMedia(MOBILE_MQ);
+  isMobile.value = mql.matches;
+  mql.addEventListener('change', onMqChange);
   if (booted) return;
   booted = true;
   runBoot();
@@ -221,6 +241,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   timers.forEach(clearTimeout);
   if (onKeyGlobal) window.removeEventListener('keydown', onKeyGlobal);
+  mql?.removeEventListener('change', onMqChange);
 });
 
 function skipBoot() {
@@ -270,6 +291,14 @@ watch(
 watch(
   () => state.bootLines.length,
   () => nextTick(() => { if (bootRef.value) bootRef.value.scrollTop = bootRef.value.scrollHeight; }),
+);
+// Layout swap (rotate / resize across the breakpoint) re-binds the refs to the
+// other template — re-pin the shell to the bottom and restore focus there.
+watch(isMobile, () =>
+  nextTick(() => {
+    if (scrollA.value) scrollA.value.scrollTop = scrollA.value.scrollHeight;
+    if (state.phase === 'tui') focusActive();
+  }),
 );
 
 function focusA() {
@@ -700,12 +729,174 @@ const fileRows = computed(() =>
     };
   }),
 );
+
+// ---- mobile split-view: chip rails ---------------------------------------
+// The file tree collapses to a horizontal chip rail using short labels
+// (the desktop list shows full filenames; chips trade the extension for space).
+const FILE_CHIP_LABELS: Record<string, string> = {
+  'about.md': 'about',
+  'experience.json': 'work',
+  'skills.ts': 'skills',
+  'projects.md': 'projects',
+  'contact.md': 'contact',
+};
+const fileChips = computed(() =>
+  files.map((f, i) => ({
+    name: f,
+    label: FILE_CHIP_LABELS[f] ?? f.replace(/\.[^.]+$/, ''),
+    active: i === state.selected,
+    open: () => {
+      selectByIndex(i);
+      focusActive();
+    },
+  })),
+);
+
+// Tap-to-run command bar under the shell. Phone keyboards are awkward, so the
+// common commands are one tap away; `email` (absent from the file rail) surfaces
+// the reveal-on-demand contact, and `exit` leaves for the readable site.
+const cmdChips = ['help', 'ls', 'whoami', 'projects', 'skills', 'contact', 'email', 'date', 'guess', 'exit'];
+function runCmd(cmd: string) {
+  if (cmd.trim()) state.hist = state.hist.concat([cmd]);
+  state.histIdx = -1;
+  exec(cmd);
+  focusActive();
+}
 </script>
 
 <template>
+  <!-- ===================== MOBILE: Split view (<768px) ===================== -->
+  <!-- MOBILE BOOT -->
+  <div
+    v-if="isMobile && state.phase === 'boot'"
+    @click="skipBoot"
+    @keydown.enter.prevent="skipBoot"
+    @keydown.space.prevent="skipBoot"
+    role="button"
+    tabindex="0"
+    aria-label="Skip boot sequence"
+    class="w-full h-full flex flex-col bg-card border border-edge-card rounded-[10px] overflow-hidden relative font-mono cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-acc shadow-[0_0_0_1px_rgba(51,255,102,0.05),0_24px_80px_rgba(0,0,0,0.6),0_0_140px_rgba(51,255,102,0.07)]"
+  >
+    <div ref="bootRef" class="flex-1 overflow-hidden px-[14px] py-[6px] text-[10.5px] leading-[1.7]">
+      <div v-for="(line, i) in state.bootLines" :key="i" class="whitespace-pre-wrap break-words min-h-[1.7em]">
+        <span v-for="(seg, j) in line.segs" :key="j" :style="{ color: seg.c, fontWeight: seg.w }">{{ seg.t }}</span>
+      </div>
+      <span class="inline-block w-[7px] h-[13px] bg-acc align-middle animate-blink"></span>
+    </div>
+
+    <div class="shrink-0 px-[14px] py-[8px] text-[10px] tracking-[0.04em] text-faint text-center">tap anywhere to skip →</div>
+
+    <div
+      class="pointer-events-none absolute inset-0 opacity-[0.32] bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.13)_0px,rgba(0,0,0,0.13)_1px,transparent_1px,transparent_3px)]"
+    ></div>
+    <div
+      class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_62%,rgba(0,0,0,0.32)_100%)]"
+    ></div>
+  </div>
+
+  <!-- MOBILE TUI -->
+  <div
+    v-else-if="isMobile"
+    class="w-full h-full flex flex-col bg-card border border-edge-card rounded-[10px] overflow-hidden relative font-mono shadow-[0_0_0_1px_rgba(51,255,102,0.05),0_24px_80px_rgba(0,0,0,0.6),0_0_140px_rgba(51,255,102,0.07)]"
+  >
+    <!-- a) title bar -->
+    <div class="flex items-center justify-between px-[16px] py-[9px] border-b border-edge-soft shrink-0">
+      <span class="text-acc text-[12.5px] font-medium">{{ host }}</span>
+      <span class="text-dim text-[10px] tracking-[0.08em]">tui · mobile</span>
+    </div>
+
+    <!-- b) file chip rail -->
+    <div
+      class="flex gap-[6px] px-[12px] py-[9px] overflow-x-auto border-b border-edge-soft shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <button
+        v-for="chip in fileChips"
+        :key="chip.name"
+        type="button"
+        @click="chip.open"
+        :aria-current="chip.active ? 'true' : undefined"
+        class="shrink-0 whitespace-nowrap appearance-none cursor-pointer font-mono text-[11px] px-[11px] py-[5px] rounded-[6px] border focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-acc"
+        :class="chip.active ? 'text-[#06140a] bg-acc border-acc' : 'text-grn2 bg-transparent border-edge-chip-strong'"
+      >
+        {{ chip.label }}
+      </button>
+    </div>
+
+    <!-- c) viewer -->
+    <div class="flex-[1.15] min-h-0 flex flex-col border-b border-edge-soft">
+      <div class="flex items-baseline gap-[10px] px-[16px] pt-[8px] pb-[5px] shrink-0">
+        <span class="text-grn2 text-[11px]">{{ activeFile }}</span>
+        <span class="text-dim text-[10px]">{{ openMeta }}</span>
+      </div>
+      <div ref="previewRef" class="flex-1 overflow-auto pt-[2px] pb-[12px] text-[11px] leading-[1.72]">
+        <div v-for="line in editorLines" :key="line.n" class="flex">
+          <span class="flex-[0_0_34px] text-right pr-[12px] text-[#2f4636] select-none">{{ line.n }}</span>
+          <span class="whitespace-pre-wrap break-words pr-[14px]">
+            <span v-for="(seg, j) in line.segs" :key="j" :style="{ color: seg.c, fontWeight: seg.w }">{{ seg.t }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- d) shell -->
+    <div class="flex-1 min-h-0 flex flex-col">
+      <div class="px-[16px] py-[6px] shrink-0 text-[9.5px] tracking-[0.14em] text-dim border-b border-[#122016]">SHELL</div>
+      <div
+        ref="scrollA"
+        @click="focusA"
+        role="log"
+        aria-live="polite"
+        aria-label="terminal output"
+        class="flex-1 overflow-y-auto px-[14px] pt-[9px] pb-[6px] text-[11.5px] leading-[1.6] cursor-text"
+      >
+        <div v-for="(line, i) in state.lines" :key="i" class="whitespace-pre-wrap break-words min-h-[1.6em]">
+          <span v-for="(seg, j) in line.segs" :key="j" :style="{ color: seg.c, fontWeight: seg.w }">{{ seg.t }}</span>
+        </div>
+        <div class="flex items-baseline">
+          <span class="text-acc font-medium">{{ host }}</span>
+          <span class="text-dim">:</span>
+          <span class="text-grn2">~</span>
+          <span class="text-acc font-medium">$&nbsp;</span>
+          <input
+            ref="inputA"
+            :value="state.input"
+            @input="onInput"
+            @keydown="onKey"
+            spellcheck="false"
+            autocomplete="off"
+            placeholder="type or tap below"
+            aria-label="terminal input"
+            class="flex-1 min-w-0 bg-transparent border-none outline-none text-wht caret-acc p-0 font-mono text-[11.5px] leading-[1.6]"
+          />
+        </div>
+      </div>
+
+      <!-- command chip bar -->
+      <div class="flex flex-wrap gap-[7px] px-[11px] py-[8px] border-t border-edge-soft shrink-0">
+        <button
+          v-for="c in cmdChips"
+          :key="c"
+          type="button"
+          @click="runCmd(c)"
+          class="appearance-none cursor-pointer whitespace-nowrap font-mono text-[11px] px-[11px] py-[6px] rounded-[7px] text-txt border border-edge-chip bg-[rgba(51,255,102,0.05)] focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-acc"
+        >
+          {{ c }}
+        </button>
+      </div>
+    </div>
+
+    <div
+      class="pointer-events-none absolute inset-0 opacity-[0.32] bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.13)_0px,rgba(0,0,0,0.13)_1px,transparent_1px,transparent_3px)]"
+    ></div>
+    <div
+      class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_62%,rgba(0,0,0,0.32)_100%)]"
+    ></div>
+  </div>
+
+  <!-- ===================== DESKTOP: three-pane (≥768px) ===================== -->
   <!-- BOOT -->
   <div
-    v-if="state.phase === 'boot'"
+    v-else-if="state.phase === 'boot'"
     @click="skipBoot"
     @keydown.enter.prevent="skipBoot"
     @keydown.space.prevent="skipBoot"
