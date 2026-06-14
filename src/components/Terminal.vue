@@ -53,7 +53,8 @@ interface Identity {
   location: string;
 }
 interface ContactInfo {
-  email: string;
+  emailDisplayB64: string;
+  emailHrefB64: string;
   github: string;
   linkedin: string | null;
   phoneDisplayB64: string;
@@ -103,7 +104,7 @@ const SY = {
 
 const files = ['about.md', 'experience.json', 'skills.ts', 'projects.md', 'contact.md'];
 const CMDS = [
-  'about', 'cat', 'clear', 'contact', 'date', 'echo', 'exit', 'experience', 'guess',
+  'about', 'cat', 'clear', 'contact', 'date', 'echo', 'email', 'exit', 'experience', 'guess',
   'help', 'history', 'ls', 'open', 'phone', 'projects', 'pwd', 'resume', 'skills', 'sudo', 'top', 'whoami',
 ];
 // Easter eggs — undocumented in `help`, listed by `cat .secrets`, and (since
@@ -395,6 +396,7 @@ function dispatch(cmd: string) {
       out.push(h('projects', 'open projects.md ↑'));
       out.push(h('skills', 'open skills.ts ↑'));
       out.push(h('contact', 'open contact.md ↑'));
+      out.push(h('email', 'reveal my email ✉'));
       out.push(h('phone', 'reveal my number ☎'));
       out.push(h('open <file>', 'open any file in the viewer'));
       out.push(h('ls', 'list the workspace'));
@@ -441,6 +443,10 @@ function dispatch(cmd: string) {
     case 'cv':
       selectByName('experience.json');
       out.push([s('→ no PDF here — the CV lives in ', C.dim), s('experience.json', C.acc), s(' ↑ and on ', C.dim), s(githubShort, C.wht, 500)]);
+      break;
+    case 'email':
+    case 'mail':
+      out.push([s('✉  ', C.amb), s(atob(props.contact.emailDisplayB64), C.wht, 600), s('   — say hi.', C.dim)]);
       break;
     case 'phone':
     case 'call':
@@ -652,7 +658,7 @@ function fileLines(name: string): Seg[][] {
   } else if (name === 'contact.md') {
     L.push([s('# ', SY.com), s('Contact', SY.head, 700)]);
     L.push([]);
-    L.push([s('email      ', SY.dim), s(props.contact.email, SY.head, 500)]);
+    L.push([s('email      ', SY.dim), s('run ', SY.com), s('email', SY.acc), s(' to reveal ✉', SY.com)]);
     L.push([s('github     ', SY.dim), s(githubShort, SY.txt)]);
     if (props.contact.linkedin) L.push([s('linkedin   ', SY.dim), s(props.contact.linkedin.replace(/^https?:\/\//, ''), SY.txt)]);
     L.push([s('phone      ', SY.dim), s('run ', SY.com), s('phone', SY.acc), s(' to reveal ☎', SY.com)]);

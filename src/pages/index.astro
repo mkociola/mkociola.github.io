@@ -169,10 +169,15 @@ const nav = [
       <h2 class="m-0 mb-[18px] text-[32px] sm:text-[44px] font-bold tracking-[-0.02em] text-heading">
         Have a problem worth solving?
       </h2>
-      <a
-        href={`mailto:${contact.email}`}
-        class="inline-block font-mono text-[17px] font-medium text-[#06140a] bg-acc px-[26px] py-[14px] rounded-[8px] no-underline mb-7 transition-colors hover:bg-[#5cff85]"
-        >{contact.email}</a
+      <!-- Email is assembled in JS on click so it never ships as plain text. -->
+      <button
+        type="button"
+        data-reveal
+        data-d={contact.email.displayB64}
+        data-h={contact.email.hrefB64}
+        data-reveal-class="inline-block font-mono text-[17px] font-medium text-[#06140a] bg-acc px-[26px] py-[14px] rounded-[8px] no-underline mb-7 transition-colors hover:bg-[#5cff85]"
+        class="inline-block font-mono text-[17px] font-medium text-[#06140a] bg-acc px-[26px] py-[14px] rounded-[8px] border-none cursor-pointer mb-7 transition-colors hover:bg-[#5cff85]"
+        >reveal email ✉</button
       >
       <div class="flex flex-wrap justify-center items-center gap-6 font-mono text-[13px]">
         <a href={contact.github.url} class="text-muted no-underline transition-colors hover:text-acc">github ↗</a>
@@ -185,10 +190,11 @@ const nav = [
         }
         <!-- Phone is assembled in JS on click so it never ships as plain text. -->
         <button
-          id="reveal-phone"
           type="button"
+          data-reveal
           data-d={contact.phone.displayB64}
           data-h={contact.phone.hrefB64}
+          data-reveal-class="text-acc no-underline"
           class="font-mono text-[13px] text-muted bg-transparent border-none cursor-pointer p-0 transition-colors hover:text-acc"
           >reveal phone ☎</button
         >
@@ -201,15 +207,17 @@ const nav = [
   </div>
 
   <script is:inline>
-    // Click-to-reveal phone: decode the base64 parts only on explicit action.
-    document.getElementById('reveal-phone')?.addEventListener('click', function () {
-      var d = atob(this.dataset.d);
-      var h = atob(this.dataset.h);
-      var a = document.createElement('a');
-      a.href = h;
-      a.textContent = d;
-      a.className = 'text-acc no-underline';
-      this.replaceWith(a);
+    // Click-to-reveal contact channels (email, phone): the address/number is
+    // base64-encoded in the markup and only decoded into a real link on an
+    // explicit click, so it never ships as plain text for harvesters to scrape.
+    document.querySelectorAll('[data-reveal]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var a = document.createElement('a');
+        a.href = atob(btn.dataset.h);
+        a.textContent = atob(btn.dataset.d);
+        a.className = btn.dataset.revealClass || 'text-acc no-underline';
+        btn.replaceWith(a);
+      });
     });
   </script>
 </Base>

@@ -30,7 +30,10 @@ const projects = (await getProjects()).map((p) => ({
 }));
 
 const contactProp = {
-  email: contact.email,
+  // Email/phone are passed base64-encoded only — never as plain text — since a
+  // client:only component's props are serialized into this page's static HTML.
+  emailDisplayB64: contact.email.displayB64,
+  emailHrefB64: contact.email.hrefB64,
   github: contact.github.url,
   linkedin: hasLinkedIn ? contact.linkedin.url : null,
   phoneDisplayB64: contact.phone.displayB64,

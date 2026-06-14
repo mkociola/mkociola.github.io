@@ -28,15 +28,20 @@ export const identity = {
 export const githubUsername = 'mkociola';
 
 export const contact = {
-  email: 'mateusz.kociola@icloud.com',
+  /**
+   * Contact channels (email + phone) are deliberately NOT shipped as plain text.
+   * Crawlers/bots stay on "/" (see bot-guard) and would otherwise scrape a
+   * `mailto:`/`tel:` link, so both are base64-encoded here and only assembled in
+   * JS on an explicit user action (click-to-reveal on "/", `email`/`phone` in
+   * the TUI). This keeps them off naive harvesters while still reachable by real
+   * humans. Decode with `atob()` — never interpolate the decoded value into HTML.
+   */
+  email: {
+    displayB64: 'bWF0ZXVzei5rb2Npb2xhQGljbG91ZC5jb20=', // "mateusz.kociola@icloud.com"
+    hrefB64: 'bWFpbHRvOm1hdGV1c3oua29jaW9sYUBpY2xvdWQuY29t', // "mailto:mateusz.kociola@icloud.com"
+  },
   github: { label: 'github.com/mkociola', url: 'https://github.com/mkociola' },
   linkedin: { label: 'linkedin', url: 'https://www.linkedin.com/in/mateusz-kocioła-510678230/' },
-  /**
-   * Phone is deliberately NOT shipped as plain text. Crawlers/bots stay on "/"
-   * (see bot-guard), so the number is base64-encoded here and only assembled in
-   * JS on an explicit user action (click-to-reveal on "/", `phone` in the TUI).
-   * This keeps it off naive scrapers while still reachable by real humans.
-   */
   phone: {
     displayB64: 'KzQ4IDc5MSA3MzEgMzg4', // "+48 791 731 388"
     hrefB64: 'dGVsOis0ODc5MTczMTM4OA==', // "tel:+48791731388"
