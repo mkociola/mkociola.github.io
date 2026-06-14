@@ -1,17 +1,235 @@
 ---
+import { getCollection, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import { BOT_GUARD_SOURCE } from '../lib/bot-guard';
+import { getProjects } from '../lib/github';
+import { identity, contact, hasLinkedIn, skillGroups, languages, about } from '../lib/site';
 
+// The readable "fallback" site. Bots, crawlers and no-JS clients land and stay
+// here; real visitors are redirected to /TUI by the inline guard below.
+
+// Experience comes from the `work` content collection (single source of truth).
+const jobs = (await getCollection('work', (e) => !e.data.draft)).sort((a, b) => a.data.order - b.data.order);
+const jobBodies = Object.fromEntries(await Promise.all(jobs.map(async (j) => [j.id, (await render(j)).Content])));
+
+// Projects are auto-fetched from GitHub at build time (pinned repos, in order).
+const projects = await getProjects();
+
+const nav = [
+  { href: '#about', label: 'about' },
+  { href: '#experience', label: 'experience' },
+  { href: '#projects', label: 'projects' },
+  { href: '#skills', label: 'skills' },
+  { href: '#contact', label: 'contact' },
+];
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base>
+  <script is:inline set:html={BOT_GUARD_SOURCE} slot="head" />
+
+  <div id="top" class="min-h-screen bg-shell text-ink font-sans">
+    <SiteHeader>
+      <nav class="flex items-center gap-4 sm:gap-[26px] font-mono text-[13px]">
+        {
+          nav.map((item) => (
+            <a href={item.href} class="hidden sm:inline text-muted no-underline transition-colors hover:text-acc">
+              {item.label}
+            </a>
+          ))
+        }
+        <a
+          href="/TUI"
+          class="font-mono text-[12px] text-txt border border-edge-chip-strong px-3 py-[6px] rounded-[6px] no-underline transition-colors hover:border-acc hover:text-acc"
+          >‹ terminal</a
+        >
+      </nav>
+    </SiteHeader>
+
+    <!-- about / hero -->
+    <section id="about" class="mx-auto max-w-[1000px] px-8 pt-24 pb-6">
+      <div class="font-mono text-[13px] text-acc mb-[18px]">// hello world</div>
+      <h1 class="m-0 mb-4 text-[40px] sm:text-[60px] font-bold tracking-[-0.03em] leading-[1.05] text-heading">
+        {identity.name}
+      </h1>
+      <p class="m-0 mb-3 text-[18px] sm:text-[21px] text-body max-w-[660px] leading-[1.5] [text-wrap:pretty]">
+        {identity.tagline}
+      </p>
+      <div class="font-mono text-[13px] text-dim mt-4">
+        {identity.title} · {identity.location}
+      </div>
+      <div class="flex flex-wrap gap-3 mt-7">
+        <a
+          href="#contact"
+          class="font-mono text-[13px] font-medium text-[#06140a] bg-acc px-[18px] py-[11px] rounded-[6px] no-underline transition-colors hover:bg-[#5cff85]"
+          >get in touch</a
+        >
+        <a
+          href={contact.github.url}
+          class="font-mono text-[13px] text-txt border border-edge-chip-strong px-[18px] py-[11px] rounded-[6px] no-underline transition-colors hover:border-acc hover:text-acc"
+          >github ↗</a
+        >
+      </div>
+    </section>
+
+    <!-- experience -->
+    <section id="experience" class="mx-auto max-w-[1000px] px-8 pt-14 pb-6">
+      <div class="font-mono text-[13px] text-acc mb-[10px]">// 01 — experience</div>
+      <h2 class="m-0 mb-7 text-[34px] font-semibold tracking-[-0.02em] text-heading">Where I've worked</h2>
+      {
+        jobs.map((job, i) => {
+          const Body = jobBodies[job.id];
+          return (
+            <div
+              class:list={[
+                'grid grid-cols-1 sm:grid-cols-[170px_1fr] gap-2 sm:gap-x-7 border-t border-edge py-7',
+                i === jobs.length - 1 && 'border-b',
+              ]}
+            >
+              <div class="font-mono text-[13px] text-dim pt-1">{job.data.period}</div>
+              <div>
+                <div class="text-[19px] font-semibold text-heading">
+                  {job.data.role} <span class="text-acc">@ {job.data.company}</span>
+                </div>
+                <p class="mt-2 mb-[14px] text-[15.5px] leading-[1.6] text-body max-w-[660px] [text-wrap:pretty]">
+                  {job.data.summary}
+                </p>
+                <div class="cv-body text-[14.5px] leading-[1.6] text-body max-w-[660px] mb-[14px]">
+                  <Body />
+                </div>
+                <div class="flex flex-wrap gap-2 font-mono text-[12px] text-muted">
+                  {job.data.stack.map((t) => (
+                    <span class="border border-edge-chip rounded-[4px] px-2 py-[3px]">{t}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })
+      }
+    </section>
+
+    <!-- projects -->
+    <section id="projects" class="mx-auto max-w-[1000px] px-8 pt-14 pb-6">
+      <div class="font-mono text-[13px] text-acc mb-[10px]">// 02 — projects</div>
+      <h2 class="m-0 mb-2 text-[34px] font-semibold tracking-[-0.02em] text-heading">Things I've built</h2>
+      <p class="m-0 mb-7 font-mono text-[12px] text-dim">// pinned on github — synced at build</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {
+          projects.map((p) => (
+            <a
+              href={p.url}
+              class="block bg-panel border border-edge-panel rounded-[10px] p-[26px] no-underline transition-colors hover:border-acc"
+            >
+              <div class="flex justify-between items-baseline mb-[10px]">
+                <div class="font-mono text-[16px] font-medium text-acc">{p.name}</div>
+                <div class="font-mono text-[12px] text-dim">{p.stars > 0 ? `★ ${p.stars}` : p.pinned ? 'pinned' : ''}</div>
+              </div>
+              <p class="m-0 mb-4 text-[15px] leading-[1.55] text-body [text-wrap:pretty]">{p.description}</p>
+              <div class="font-mono text-[12px] text-muted">
+                {[p.language, ...p.topics.slice(0, 2)].filter(Boolean).join(' · ')}
+              </div>
+            </a>
+          ))
+        }
+      </div>
+      <div class="mt-6 font-mono text-[13px]">
+        <a href={contact.github.url} class="text-muted no-underline transition-colors hover:text-acc">more on github ↗</a>
+      </div>
+    </section>
+
+    <!-- skills -->
+    <section id="skills" class="mx-auto max-w-[1000px] px-8 pt-14 pb-6">
+      <div class="font-mono text-[13px] text-acc mb-[10px]">// 03 — skills</div>
+      <h2 class="m-0 mb-7 text-[34px] font-semibold tracking-[-0.02em] text-heading">Tools I reach for</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {
+          skillGroups.map((group) => (
+            <div class="border-t border-edge pt-5">
+              <div class="font-mono text-[12px] text-dim mb-[14px]">{group.label}</div>
+              <div class="flex flex-wrap gap-2">
+                {group.items.map((item) => (
+                  <span class="font-mono text-[13px] text-txt border border-edge-chip rounded-[4px] px-[10px] py-[5px]">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+      <div class="mt-7 font-mono text-[12px] text-dim">
+        spoken/ {languages.map((l) => `${l.name} (${l.level})`).join(' · ')}
+      </div>
+    </section>
+
+    <!-- contact -->
+    <section id="contact" class="mx-auto max-w-[1000px] px-8 pt-[88px] pb-12 text-center">
+      <div class="font-mono text-[13px] text-acc mb-[14px]">// 04 — contact</div>
+      <h2 class="m-0 mb-[18px] text-[32px] sm:text-[44px] font-bold tracking-[-0.02em] text-heading">
+        Have a problem worth solving?
+      </h2>
+      <a
+        href={`mailto:${contact.email}`}
+        class="inline-block font-mono text-[17px] font-medium text-[#06140a] bg-acc px-[26px] py-[14px] rounded-[8px] no-underline mb-7 transition-colors hover:bg-[#5cff85]"
+        >{contact.email}</a
+      >
+      <div class="flex flex-wrap justify-center items-center gap-6 font-mono text-[13px]">
+        <a href={contact.github.url} class="text-muted no-underline transition-colors hover:text-acc">github ↗</a>
+        {
+          hasLinkedIn && (
+            <a href={contact.linkedin.url} class="text-muted no-underline transition-colors hover:text-acc">
+              linkedin ↗
+            </a>
+          )
+        }
+        <!-- Phone is assembled in JS on click so it never ships as plain text. -->
+        <button
+          id="reveal-phone"
+          type="button"
+          data-d={contact.phone.displayB64}
+          data-h={contact.phone.hrefB64}
+          class="font-mono text-[13px] text-muted bg-transparent border-none cursor-pointer p-0 transition-colors hover:text-acc"
+          >reveal phone ☎</button
+        >
+      </div>
+      <div class="font-mono text-[12px] text-faint mt-16 border-t border-edge pt-6">
+        © 2026 {identity.name} — prefer the keyboard?
+        <a href="/TUI" class="text-muted no-underline transition-colors hover:text-acc">‹ back to the terminal</a>.
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+    // Click-to-reveal phone: decode the base64 parts only on explicit action.
+    document.getElementById('reveal-phone')?.addEventListener('click', function () {
+      var d = atob(this.dataset.d);
+      var h = atob(this.dataset.h);
+      var a = document.createElement('a');
+      a.href = h;
+      a.textContent = d;
+      a.className = 'text-acc no-underline';
+      this.replaceWith(a);
+    });
+  </script>
+</Base>
+
+<style is:global>
+  /* Markdown bullet bodies rendered from the work collection. */
+  .cv-body ul {
+    margin: 0;
+    padding-left: 1.1em;
+    list-style: none;
+  }
+  .cv-body li {
+    position: relative;
+    padding-left: 0.2em;
+    margin: 0.3em 0;
+  }
+  .cv-body li::before {
+    content: '–';
+    position: absolute;
+    left: -1.1em;
+    color: var(--color-acc, #33ff66);
+  }
+</style>
