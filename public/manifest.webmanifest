@@ -1,0 +1,14 @@
+{
+  "name": "Mateusz Kocioła — GPU Software Engineer @ Intel",
+  "short_name": "kociola",
+  "description": "Software engineer working close to the metal — Linux systems, virtualization and test automation by day; web development and security on the side.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060a07",
+  "theme_color": "#060a07",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
