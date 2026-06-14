@@ -1,0 +1,42 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Build & deploy on every push to the default branch.
+  push:
+    branches: [main]
+  # Allow manual runs from the Actions tab.
+  workflow_dispatch:
+
+# Grant the job the permissions needed to publish a Pages deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress run.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install, build, and upload your site
+        uses: withastro/action@v6
+        # node-version defaults to 24, which satisfies this project's
+        # `engines.node` (>=22.12.0). The package manager and build command
+        # are auto-detected from the lockfile.
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
