@@ -1,0 +1,93 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import Terminal from '../components/Terminal.vue';
+import { getProjects } from '../lib/github';
+import { identity, contact, hasLinkedIn, skillGroups, languages, about } from '../lib/site';
+
+// The terminal experience. Real visitors are redirected here from "/"; this
+// page is intentionally not crawlable-first (the readable site lives at "/").
+// All content is fetched here and handed to the client-only Vue component as
+// props, so the terminal stays a pure view over the same sources as "/".
+
+const jobs = (await getCollection('work', (e) => !e.data.draft)).sort((a, b) => a.data.order - b.data.order);
+const work = jobs.map((j) => ({
+  role: j.data.role,
+  company: j.data.company,
+  period: j.data.period,
+  summary: j.data.summary,
+  stack: j.data.stack,
+}));
+
+const projects = (await getProjects()).map((p) => ({
+  name: p.name,
+  description: p.description,
+  language: p.language,
+  stars: p.stars,
+  url: p.url,
+  pinned: p.pinned,
+}));
+
+const contactProp = {
+  email: contact.email,
+  github: contact.github.url,
+  linkedin: hasLinkedIn ? contact.linkedin.url : null,
+  phoneDisplayB64: contact.phone.displayB64,
+  phoneHrefB64: contact.phone.hrefB64,
+};
+
+const aboutProp = {
+  lead: about.lead,
+  paragraphs: [...about.paragraphs],
+  interests: [...identity.interests],
+  hobbies: [...identity.hobbies],
+};
+
+const identityProp = {
+  name: identity.name,
+  nick: identity.nick,
+  handle: identity.handle,
+  role: identity.role,
+  title: identity.title,
+  location: identity.location,
+};
+---
+
+<Base title={`${identity.handle}:~$ — terminal`}>
+  <meta slot="head" name="robots" content="noindex" />
+
+  <div id="top" class="bg-shell text-ink font-sans h-[100dvh] flex flex-col">
+    <SiteHeader>
+      <a
+        href="/?gui=1"
+        class="flex items-center gap-2 font-mono text-[13px] text-txt border border-edge-chip-strong px-[14px] py-[8px] rounded-[6px] no-underline transition-colors hover:border-acc hover:text-acc"
+      >
+        <span class="text-acc">⏻</span> exit terminal
+      </a>
+    </SiteHeader>
+
+    <section
+      class="flex-1 min-h-[600px] flex items-center justify-center px-4 py-4 sm:px-8 sm:py-7 bg-[radial-gradient(1200px_820px_at_50%_36%,#0a130c_0%,#060a07_72%)]"
+    >
+      <noscript>
+        <div class="text-center font-mono text-txt">
+          <p class="text-[14px] m-0 mb-3">This terminal needs JavaScript to run.</p>
+          <a href="/" class="text-acc underline">View the readable portfolio →</a>
+        </div>
+      </noscript>
+      <div class="w-full max-w-[1080px] h-full max-h-[800px]">
+        <Terminal
+          client:only="vue"
+          identity={identityProp}
+          work={work}
+          projects={projects}
+          skills={skillGroups.map((g) => ({ label: g.label, items: [...g.items] }))}
+          about={aboutProp}
+          contact={contactProp}
+          languages={languages.map((l) => ({ name: l.name, level: l.level }))}
+        />
+      </div>
+    </section>
+  </div>
+</Base>
