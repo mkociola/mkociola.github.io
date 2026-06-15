@@ -1,0 +1,70 @@
+---
+// A game showcase card — used on the homepage "Games" section and the /games
+// index. Mirrors the project-card look (bg-panel / border-edge-panel) but leads
+// with the app icon and a horizontal screenshot strip, since games are visual.
+import { Image } from 'astro:assets';
+import type { Game } from '../lib/games';
+import { slugOf, gamePath, privacyPath, supportPath } from '../lib/games';
+
+interface Props {
+  game: Game;
+}
+const { game } = Astro.props;
+const slug = slugOf(game);
+const { name, tagline, blurb, platform, status, icon, screenshots } = game.data;
+const isLive = status === 'live';
+---
+
+<article class="bg-panel border border-edge-panel rounded-[12px] p-[26px] transition-colors hover:border-acc">
+  <div class="flex items-start gap-4">
+    <a href={gamePath(slug)} class="shrink-0">
+      <Image
+        src={icon}
+        alt={`${name} app icon`}
+        width={120}
+        height={120}
+        densities={[2]}
+        class="w-[60px] h-[60px] rounded-[14px] border border-edge-panel"
+      />
+    </a>
+    <div class="min-w-0 flex-1">
+      <div class="flex items-center gap-3 flex-wrap">
+        <a href={gamePath(slug)} class="text-[18px] font-semibold text-heading no-underline hover:text-acc">{name}</a>
+        <span
+          class:list={[
+            'font-mono text-[11px] px-2 py-[2px] rounded-[4px] border',
+            isLive ? 'text-acc border-edge-chip-strong' : 'text-amb border-edge-chip',
+          ]}>{isLive ? 'on the App Store' : 'coming soon'}</span
+        >
+      </div>
+      <p class="m-0 mt-1 text-[14px] text-body">{tagline}</p>
+      <div class="mt-1 font-mono text-[12px] text-dim">{platform}</div>
+    </div>
+  </div>
+
+  <p class="mt-4 mb-0 text-[15px] leading-[1.55] text-body [text-wrap:pretty]">{blurb}</p>
+
+  {
+    screenshots.length > 0 && (
+      <div class="mt-5 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:thin]">
+        {screenshots.map((shot) => (
+          <a href={gamePath(slug)} class="shrink-0">
+            <Image
+              src={shot.src}
+              alt={shot.alt}
+              width={320}
+              densities={[2]}
+              class="h-[300px] w-auto rounded-[10px] border border-edge-panel"
+            />
+          </a>
+        ))}
+      </div>
+    )
+  }
+
+  <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[13px]">
+    <a href={gamePath(slug)} class="text-acc no-underline hover:underline">view details →</a>
+    <a href={privacyPath(slug)} class="text-muted no-underline transition-colors hover:text-acc">privacy</a>
+    <a href={supportPath(slug)} class="text-muted no-underline transition-colors hover:text-acc">support</a>
+  </div>
+</article>

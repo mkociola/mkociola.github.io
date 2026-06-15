@@ -1,0 +1,75 @@
+---
+// Support page body for a game, rendered inside LegalLayout. Per the App Store's
+// Support URL requirement: a public page where users can get help and contact
+// the developer. Contact routes to the same channels as the portfolio homepage.
+import { contact } from '../lib/site';
+import { slugOf, privacyPath, type Game } from '../lib/games';
+
+interface Props {
+  game: Game;
+}
+const { game } = Astro.props;
+const { name, developer, status } = game.data;
+const isLive = status === 'live';
+const slug = slugOf(game);
+const githubShort = contact.github.url.replace(/^https?:\/\//, '');
+---
+
+<p>
+  Need a hand with <strong>{name}</strong>? It’s made and maintained by {developer} — there’s no
+  support account or ticket system, just send a message and it reaches a real person.
+</p>
+
+<h2>Get in touch</h2>
+<p>
+  The fastest way to reach me is email. I read every message and aim to reply within a few days.
+</p>
+<ul>
+  <li>
+    {/* Email assembled in JS on click so it never ships as plain text. */}
+    <button
+      type="button"
+      data-reveal
+      data-d={contact.email.displayB64}
+      data-h={contact.email.hrefB64}
+      data-reveal-class="font-mono text-acc no-underline"
+      class="font-mono text-acc bg-transparent border-none cursor-pointer p-0 underline underline-offset-2"
+    >
+      reveal email ✉
+    </button>
+  </li>
+  <li>All contact options are on the <a href="/#contact">portfolio homepage ↗</a>.</li>
+  <li>Code & issues: <a href={contact.github.url}>{githubShort} ↗</a></li>
+</ul>
+
+<h2>Reporting a bug</h2>
+<p>
+  Found something off? Email me with your device model and iOS version, plus a quick description of
+  what happened and what you expected. A screenshot helps a lot. Bug reports go straight to the top
+  of the list.
+</p>
+
+<h2>Feature requests</h2>
+<p>
+  Ideas are welcome — if there’s something you wish {name} did, tell me. Small, focused apps stay
+  good by listening, so I genuinely read these.
+</p>
+
+<h2>Troubleshooting</h2>
+<ul>
+  {
+    isLive ? (
+      <li>Make sure you’re on the latest version from the App Store.</li>
+    ) : (
+      <li>Once {name} is on the App Store, keeping it updated will pick up the latest fixes.</li>
+    )
+  }
+  <li>Fully quit and reopen the App — that clears most transient glitches.</li>
+  <li>The App works entirely offline; no internet connection is needed to play.</li>
+</ul>
+
+<h2>Privacy</h2>
+<p>
+  {name} collects no personal data. For the details, see the
+  <a href={privacyPath(slug)}>privacy policy</a>.
+</p>

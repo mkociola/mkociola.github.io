@@ -1,0 +1,113 @@
+---
+// The privacy policy body for a non-data-collecting app. Rendered inside
+// LegalLayout. Written to be accurate for an app that collects, stores and
+// transmits no personal data (the `collectsData: false` case); if a future game
+// flips that flag this component intentionally surfaces a notice instead of
+// silently serving a wrong policy.
+import { contact } from '../lib/site';
+import type { Game } from '../lib/games';
+
+interface Props {
+  game: Game;
+}
+const { game } = Astro.props;
+const { name, developer, platform, effectiveDate, collectsData } = game.data;
+
+// Format the ISO effective date without timezone drift (manual, not Date()).
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const [y, m, d] = effectiveDate.split('-').map(Number);
+const prettyDate = `${MONTHS[(m ?? 1) - 1]} ${d}, ${y}`;
+---
+
+{
+  collectsData ? (
+    <p>
+      <strong>This policy template applies to apps that do not collect data.</strong> {name} is
+      configured as collecting data, so a tailored policy is required — update this entry before
+      publishing.
+    </p>
+  ) : (
+    <>
+      <p class="text-dim font-mono text-[13px]">Effective {prettyDate}</p>
+
+      <p>
+        This Privacy Policy explains how <strong>{name}</strong> (the “App”), developed by{' '}
+        {developer}, handles your information. The short version: <strong>the App does not collect,
+        store on our servers, or share any personal data.</strong> There are no accounts, no ads, and
+        no analytics or tracking of any kind.
+      </p>
+
+      <h2>Information the App collects</h2>
+      <p>
+        <strong>None.</strong>&nbsp;{name} does not ask for, collect, or transmit any personally
+        identifiable information. We do not require an account, and the App works fully offline.
+      </p>
+
+      <h2>Data stored on your device</h2>
+      <p>
+        The App may save gameplay preferences and progress — such as your chosen difficulty, theme,
+        and best times — locally on your {platform} device so the App remembers them between sessions.
+        This information never leaves your device, is not visible to us, and is removed when you
+        delete the App.
+      </p>
+
+      <h2>Analytics, advertising and third parties</h2>
+      <p>
+        {name} contains no third-party analytics, no advertising networks, and no third-party SDKs
+        that collect data. We do not sell, rent, or share information with anyone, because we do not
+        collect any in the first place.
+      </p>
+
+      <h2>Tracking</h2>
+      <p>
+        The App does not track you across apps or websites and does not request access to the
+        device advertising identifier (IDFA). No App Tracking Transparency prompt is shown because
+        no tracking takes place.
+      </p>
+
+      <h2>Children’s privacy</h2>
+      <p>
+        {name} is suitable for all ages and collects no personal information from anyone, including
+        children. Because nothing is collected, the App does not gather data from children under 13
+        (or the equivalent minimum age in your region) — or from anyone else.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>
+        Since the App holds no personal data about you on any server, there is nothing for us to
+        access, correct, export, or delete on your behalf. Any data stored locally is fully under
+        your control and is erased by deleting the App.
+      </p>
+
+      <h2>Changes to this policy</h2>
+      <p>
+        If this policy changes, the revised version will be posted on this page with an updated
+        effective date. Material changes will be reflected here before they take effect.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        If you have any questions about this Privacy Policy, you can reach {developer} by email or
+        through the contact options on the portfolio:
+      </p>
+      <p>
+        {/* Email assembled in JS on click so it never ships as plain text. */}
+        <button
+          type="button"
+          data-reveal
+          data-d={contact.email.displayB64}
+          data-h={contact.email.hrefB64}
+          data-reveal-class="font-mono text-acc no-underline"
+          class="font-mono text-acc bg-transparent border-none cursor-pointer p-0 underline underline-offset-2"
+        >
+          reveal email ✉
+        </button>
+        {' · '}
+        <a href="/#contact">contact options ↗</a>
+      </p>
+    </>
+  )
+}

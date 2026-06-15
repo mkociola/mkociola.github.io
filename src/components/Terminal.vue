@@ -40,6 +40,16 @@ interface ProjectItem {
   url: string;
   pinned: boolean;
 }
+interface GameItem {
+  name: string;
+  tagline: string;
+  blurb: string;
+  platform: string;
+  status: 'live' | 'coming-soon';
+  features: string[];
+  path: string;
+  appStoreUrl: string | null;
+}
 interface SkillGroup {
   label: string;
   items: string[];
@@ -68,6 +78,7 @@ const props = defineProps<{
   identity: Identity;
   work: WorkItem[];
   projects: ProjectItem[];
+  games: GameItem[];
   skills: SkillGroup[];
   about: { lead: string; paragraphs: string[]; interests: string[]; hobbies: string[] };
   contact: ContactInfo;
@@ -102,9 +113,16 @@ const SY = {
   dim: '#557a5e',
 } as const;
 
-const files = ['about.md', 'experience.json', 'skills.ts', 'projects.md', 'contact.md'];
+const files = [
+  'about.md',
+  'experience.json',
+  'skills.ts',
+  'projects.md',
+  ...(props.games.length ? ['games.md'] : []),
+  'contact.md',
+];
 const CMDS = [
-  'about', 'cat', 'clear', 'contact', 'date', 'echo', 'email', 'exit', 'experience', 'guess',
+  'about', 'cat', 'clear', 'contact', 'date', 'echo', 'email', 'exit', 'experience', 'games', 'guess',
   'help', 'history', 'ls', 'open', 'phone', 'projects', 'pwd', 'resume', 'skills', 'sudo', 'top', 'whoami',
 ];
 // Easter eggs — undocumented in `help`, listed by `cat .secrets`, and (since
@@ -423,6 +441,7 @@ function dispatch(cmd: string) {
       out.push(h('about', 'open about.md ↑'));
       out.push(h('experience', 'open experience.json ↑'));
       out.push(h('projects', 'open projects.md ↑'));
+      if (props.games.length) out.push(h('games', 'open games.md ↑'));
       out.push(h('skills', 'open skills.ts ↑'));
       out.push(h('contact', 'open contact.md ↑'));
       out.push(h('email', 'reveal my email ✉'));
@@ -451,6 +470,15 @@ function dispatch(cmd: string) {
     case 'projects':
       selectByName('projects.md');
       out.push([s('→ opened ', C.dim), s('projects.md', C.acc), s(' ↑', C.dim)]);
+      break;
+    case 'games':
+    case 'apps':
+      if (files.includes('games.md')) {
+        selectByName('games.md');
+        out.push([s('→ opened ', C.dim), s('games.md', C.acc), s(' ↑', C.dim)]);
+      } else {
+        out.push([s('no games published yet — check back soon.', C.dim)]);
+      }
       break;
     case 'skills':
       selectByName('skills.ts');
@@ -684,6 +712,17 @@ function fileLines(name: string): Seg[][] {
       if (tags) L.push([s(tags + '  ', SY.dim), s('→ ' + p.url.replace(/^https?:\/\//, ''), SY.dim)]);
       else L.push([s('→ ' + p.url.replace(/^https?:\/\//, ''), SY.dim)]);
     });
+  } else if (name === 'games.md') {
+    L.push([s('# ', SY.com), s('Games', SY.head, 700)]);
+    L.push([s('  ', SY.com), s('// apps on the app store', SY.com)]);
+    props.games.forEach((g) => {
+      L.push([]);
+      L.push([s('## ', SY.com), s(g.name, SY.acc, 600), s(g.status === 'live' ? '   ● live' : '   ◆ coming soon', SY.dim)]);
+      L.push([s(g.tagline, SY.txt)]);
+      if (g.blurb) L.push([s(g.blurb, SY.dim)]);
+      g.features.forEach((f) => L.push([s('- ', SY.acc), s(f, SY.txt)]));
+      L.push([s('→ ' + g.path, SY.dim)]);
+    });
   } else if (name === 'contact.md') {
     L.push([s('# ', SY.com), s('Contact', SY.head, 700)]);
     L.push([]);
@@ -738,6 +777,7 @@ const FILE_CHIP_LABELS: Record<string, string> = {
   'experience.json': 'work',
   'skills.ts': 'skills',
   'projects.md': 'projects',
+  'games.md': 'games',
   'contact.md': 'contact',
 };
 const fileChips = computed(() =>
@@ -755,7 +795,7 @@ const fileChips = computed(() =>
 // Tap-to-run command bar under the shell. Phone keyboards are awkward, so the
 // common commands are one tap away; `email` (absent from the file rail) surfaces
 // the reveal-on-demand contact, and `exit` leaves for the readable site.
-const cmdChips = ['help', 'ls', 'whoami', 'projects', 'skills', 'contact', 'email', 'date', 'guess', 'exit'];
+const cmdChips = ['help', 'ls', 'whoami', 'projects', 'games', 'skills', 'contact', 'email', 'date', 'guess', 'exit'];
 function runCmd(cmd: string) {
   if (cmd.trim()) state.hist = state.hist.concat([cmd]);
   state.histIdx = -1;

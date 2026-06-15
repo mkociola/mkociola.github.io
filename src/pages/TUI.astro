@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import Terminal from '../components/Terminal.vue';
 import { getProjects } from '../lib/github';
+import { sortGames, toTextItem } from '../lib/games';
 import { identity, contact, hasLinkedIn, skillGroups, languages, about } from '../lib/site';
 
 // The terminal experience. Real visitors are redirected here from "/"; this
@@ -28,6 +29,10 @@ const projects = (await getProjects()).map((p) => ({
   url: p.url,
   pinned: p.pinned,
 }));
+
+// Games as a text-only projection — the terminal is a serialised-prop island
+// and a text surface, so it gets strings + in-site paths, never image data.
+const games = sortGames(await getCollection('games', (e) => !e.data.draft)).map(toTextItem);
 
 const contactProp = {
   // Email/phone are passed base64-encoded only — never as plain text — since a
@@ -85,6 +90,7 @@ const identityProp = {
           identity={identityProp}
           work={work}
           projects={projects}
+          games={games}
           skills={skillGroups.map((g) => ({ label: g.label, items: [...g.items] }))}
           about={aboutProp}
           contact={contactProp}

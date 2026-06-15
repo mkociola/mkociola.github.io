@@ -2,8 +2,11 @@
 import { getCollection, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import SiteHeader from '../components/SiteHeader.astro';
+import GameCard from '../components/GameCard.astro';
+import RevealScript from '../components/RevealScript.astro';
 import { BOT_GUARD_SOURCE } from '../lib/bot-guard';
 import { getProjects } from '../lib/github';
+import { sortGames } from '../lib/games';
 import { identity, contact, hasLinkedIn, skillGroups, languages, about } from '../lib/site';
 
 // The readable "fallback" site. Bots, crawlers and no-JS clients land and stay
@@ -16,13 +19,27 @@ const jobBodies = Object.fromEntries(await Promise.all(jobs.map(async (j) => [j.
 // Projects are auto-fetched from GitHub at build time (pinned repos, in order).
 const projects = await getProjects();
 
+// Games are hand-curated (App Store apps; their source repos can be private).
+const games = sortGames(await getCollection('games', (e) => !e.data.draft));
+
 const nav = [
   { href: '#about', label: 'about' },
   { href: '#experience', label: 'experience' },
   { href: '#projects', label: 'projects' },
+  ...(games.length ? [{ href: '#games', label: 'games' }] : []),
   { href: '#skills', label: 'skills' },
   { href: '#contact', label: 'contact' },
 ];
+
+// Section numbers (// NN) shift to stay sequential when the games section is
+// hidden (no published games), so the numbering never skips.
+const secNo = {
+  experience: '01',
+  projects: '02',
+  games: '03',
+  skills: games.length ? '04' : '03',
+  contact: games.length ? '05' : '04',
+};
 ---
 
 <Base>
@@ -74,7 +91,7 @@ const nav = [
 
     <!-- experience -->
     <section id="experience" class="mx-auto max-w-[1000px] px-8 pt-14 pb-6">
-      <div class="font-mono text-[13px] text-acc mb-[10px]">// 01 — experience</div>
+      <div class="font-mono text-[13px] text-acc mb-[10px]">{`// ${secNo.experience} — experience`}</div>
       <h2 class="m-0 mb-7 text-[34px] font-semibold tracking-[-0.02em] text-heading">Where I've worked</h2>
       {
         jobs.map((job, i) => {
@@ -111,7 +128,7 @@ const nav = [
 
     <!-- projects -->
     <section id="projects" class="mx-auto max-w-[1000px] px-8 pt-14 pb-6">
-      <div class="font-mono text-[13px] text-acc mb-[10px]">// 02 — projects</div>
+      <div class="font-mono text-[13px] text-acc mb-[10px]">{`// ${secNo.projects} — projects`}</div>
       <h2 class="m-0 mb-2 text-[34px] font-semibold tracking-[-0.02em] text-heading">Things I've built</h2>
       <p class="m-0 mb-7 font-mono text-[12px] text-dim">// pinned on github — synced at build</p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -138,9 +155,25 @@ const nav = [
       </div>
     </section>
 
+    {/* games — hand-curated App Store apps (hidden if none are published) */}
+    {
+      games.length > 0 && (
+        <section id="games" class="mx-auto max-w-[1000px] px-8 pt-14 pb-6">
+          <div class="font-mono text-[13px] text-acc mb-[10px]">{`// ${secNo.games} — games`}</div>
+          <h2 class="m-0 mb-2 text-[34px] font-semibold tracking-[-0.02em] text-heading">Games on the App Store</h2>
+          <p class="m-0 mb-7 font-mono text-[12px] text-dim">// small, polished apps — built & shipped solo</p>
+          <div class="grid grid-cols-1 gap-6">
+            {games.map((game) => (
+              <GameCard game={game} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
     <!-- skills -->
     <section id="skills" class="mx-auto max-w-[1000px] px-8 pt-14 pb-6">
-      <div class="font-mono text-[13px] text-acc mb-[10px]">// 03 — skills</div>
+      <div class="font-mono text-[13px] text-acc mb-[10px]">{`// ${secNo.skills} — skills`}</div>
       <h2 class="m-0 mb-7 text-[34px] font-semibold tracking-[-0.02em] text-heading">Tools I reach for</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {
@@ -165,7 +198,7 @@ const nav = [
 
     <!-- contact -->
     <section id="contact" class="mx-auto max-w-[1000px] px-8 pt-[88px] pb-12 text-center">
-      <div class="font-mono text-[13px] text-acc mb-[14px]">// 04 — contact</div>
+      <div class="font-mono text-[13px] text-acc mb-[14px]">{`// ${secNo.contact} — contact`}</div>
       <h2 class="m-0 mb-[18px] text-[32px] sm:text-[44px] font-bold tracking-[-0.02em] text-heading">
         Have a problem worth solving?
       </h2>
@@ -206,20 +239,7 @@ const nav = [
     </section>
   </div>
 
-  <script is:inline>
-    // Click-to-reveal contact channels (email, phone): the address/number is
-    // base64-encoded in the markup and only decoded into a real link on an
-    // explicit click, so it never ships as plain text for harvesters to scrape.
-    document.querySelectorAll('[data-reveal]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var a = document.createElement('a');
-        a.href = atob(btn.dataset.h);
-        a.textContent = atob(btn.dataset.d);
-        a.className = btn.dataset.revealClass || 'text-acc no-underline';
-        btn.replaceWith(a);
-      });
-    });
-  </script>
+  <RevealScript />
 </Base>
 
 <style is:global>

@@ -1,0 +1,44 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import GameCard from '../../components/GameCard.astro';
+import { identity } from '../../lib/site';
+import { sortGames } from '../../lib/games';
+
+const games = sortGames(await getCollection('games', (e) => !e.data.draft));
+---
+
+<Base
+  title={`Games — ${identity.name}`}
+  description={`Indie games and apps built and published by ${identity.name}.`}
+>
+  <div id="top" class="min-h-screen bg-shell text-ink font-sans">
+    <SiteHeader>
+      <a
+        href="/"
+        class="font-mono text-[12px] text-txt border border-edge-chip-strong px-3 py-[6px] rounded-[6px] no-underline transition-colors hover:border-acc hover:text-acc"
+        >‹ portfolio</a
+      >
+    </SiteHeader>
+
+    <section class="mx-auto max-w-[1000px] px-8 pt-20 pb-16">
+      <div class="font-mono text-[13px] text-acc mb-[10px]">// games</div>
+      <h1 class="m-0 mb-2 text-[40px] font-bold tracking-[-0.02em] text-heading">Games I ship</h1>
+      <p class="m-0 mb-9 text-[17px] text-body max-w-[620px] leading-[1.5]">
+        Small, polished apps for the App Store — built and published solo.
+      </p>
+      {
+        games.length > 0 ? (
+          <div class="grid grid-cols-1 gap-6">
+            {games.map((game) => (
+              <GameCard game={game} />
+            ))}
+          </div>
+        ) : (
+          <p class="font-mono text-[14px] text-dim">Nothing published yet — check back soon.</p>
+        )
+      }
+    </section>
+  </div>
+</Base>

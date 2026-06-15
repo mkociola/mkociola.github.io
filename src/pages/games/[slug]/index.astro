@@ -1,0 +1,130 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '../../../layouts/Base.astro';
+import SiteHeader from '../../../components/SiteHeader.astro';
+import { identity } from '../../../lib/site';
+import { slugOf, privacyPath, supportPath } from '../../../lib/games';
+
+export async function getStaticPaths() {
+  const games = await getCollection('games', (e) => !e.data.draft);
+  return games.map((game) => ({ params: { slug: slugOf(game) }, props: { game } }));
+}
+
+const { game } = Astro.props;
+const slug = slugOf(game);
+const { name, tagline, blurb, platform, status, icon, screenshots, appStoreUrl, features } = game.data;
+const isLive = status === 'live';
+const { Content } = await render(game);
+---
+
+<Base title={`${name} — ${identity.name}`} description={blurb}>
+  <div id="top" class="min-h-screen bg-shell text-ink font-sans">
+    <SiteHeader>
+      <a
+        href="/#games"
+        class="font-mono text-[12px] text-txt border border-edge-chip-strong px-3 py-[6px] rounded-[6px] no-underline transition-colors hover:border-acc hover:text-acc"
+        >‹ portfolio</a
+      >
+    </SiteHeader>
+
+    <!-- hero -->
+    <section class="mx-auto max-w-[1000px] px-8 pt-20 pb-6">
+      <div class="font-mono text-[13px] text-acc mb-5">// app store</div>
+      <div class="flex flex-col sm:flex-row items-start gap-6">
+        <Image
+          src={icon}
+          alt={`${name} app icon`}
+          width={240}
+          height={240}
+          densities={[2]}
+          class="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] rounded-[24px] border border-edge-panel shrink-0"
+        />
+        <div class="min-w-0">
+          <h1 class="m-0 mb-2 text-[34px] sm:text-[44px] font-bold tracking-[-0.02em] leading-[1.1] text-heading">
+            {name}
+          </h1>
+          <p class="m-0 mb-3 text-[17px] sm:text-[20px] text-body max-w-[620px] leading-[1.5] [text-wrap:pretty]">
+            {tagline}
+          </p>
+          <div class="font-mono text-[13px] text-dim mb-5">{platform}</div>
+          {
+            isLive && appStoreUrl ? (
+              <a
+                href={appStoreUrl}
+                class="inline-block font-mono text-[14px] font-medium text-[#06140a] bg-acc px-[20px] py-[12px] rounded-[8px] no-underline transition-colors hover:bg-[#5cff85]"
+              >
+                Download on the App Store ↗
+              </a>
+            ) : (
+              <span class="inline-flex items-center gap-2 font-mono text-[13px] text-amb border border-edge-chip rounded-[8px] px-[18px] py-[11px]">
+                <span class="w-2 h-2 rounded-full bg-amb" /> Coming soon to the App Store
+              </span>
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- screenshots -->
+    {
+      screenshots.length > 0 && (
+        <section class="mx-auto max-w-[1000px] px-8 pt-8 pb-6">
+          <div class="flex gap-4 overflow-x-auto pb-4 [scrollbar-width:thin] snap-x">
+            {screenshots.map((shot) => (
+              <Image
+                src={shot.src}
+                alt={shot.alt}
+                width={620}
+                densities={[2]}
+                class="h-[520px] w-auto rounded-[18px] border border-edge-panel shrink-0 snap-start"
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <!-- about + features -->
+    <section class="mx-auto max-w-[1000px] px-8 pt-8 pb-6 grid grid-cols-1 md:grid-cols-[1fr_320px] gap-10">
+      <div class="game-body text-[16px] leading-[1.65] text-body max-w-[640px]">
+        <Content />
+      </div>
+      {
+        features.length > 0 && (
+          <div>
+            <div class="font-mono text-[12px] text-dim mb-4">// features</div>
+            <ul class="m-0 p-0 list-none flex flex-col gap-3">
+              {features.map((f) => (
+                <li class="flex gap-3 text-[15px] leading-[1.5] text-body">
+                  <span class="text-acc shrink-0">▸</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </section>
+
+    <!-- footer / legal -->
+    <section class="mx-auto max-w-[1000px] px-8 pt-10 pb-16">
+      <div class="font-mono text-[13px] flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-edge pt-6">
+        <a href={privacyPath(slug)} class="text-muted no-underline transition-colors hover:text-acc">privacy policy</a>
+        <a href={supportPath(slug)} class="text-muted no-underline transition-colors hover:text-acc">support</a>
+        <a href="/#games" class="text-muted no-underline transition-colors hover:text-acc">‹ more from {identity.name}</a>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style is:global>
+  /* Markdown body rendered from the game entry. */
+  .game-body p {
+    margin: 0 0 1em;
+  }
+  .game-body strong {
+    color: var(--color-heading, #eef7f0);
+    font-weight: 600;
+  }
+</style>

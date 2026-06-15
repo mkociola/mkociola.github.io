@@ -1,0 +1,22 @@
+---
+import { getCollection } from 'astro:content';
+import LegalLayout from '../../../layouts/LegalLayout.astro';
+import PrivacyPolicy from '../../../components/PrivacyPolicy.astro';
+import { slugOf } from '../../../lib/games';
+
+export async function getStaticPaths() {
+  const games = await getCollection('games', (e) => !e.data.draft);
+  return games.map((game) => ({ params: { slug: slugOf(game) }, props: { game } }));
+}
+
+const { game } = Astro.props;
+---
+
+<LegalLayout
+  game={game}
+  heading="Privacy Policy"
+  title={`Privacy Policy — ${game.data.name}`}
+  description={`Privacy policy for ${game.data.name}. The app collects no personal data.`}
+>
+  <PrivacyPolicy game={game} />
+</LegalLayout>

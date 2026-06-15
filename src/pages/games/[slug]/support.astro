@@ -1,0 +1,22 @@
+---
+import { getCollection } from 'astro:content';
+import LegalLayout from '../../../layouts/LegalLayout.astro';
+import SupportContent from '../../../components/SupportContent.astro';
+import { slugOf } from '../../../lib/games';
+
+export async function getStaticPaths() {
+  const games = await getCollection('games', (e) => !e.data.draft);
+  return games.map((game) => ({ params: { slug: slugOf(game) }, props: { game } }));
+}
+
+const { game } = Astro.props;
+---
+
+<LegalLayout
+  game={game}
+  heading="Support"
+  title={`Support — ${game.data.name}`}
+  description={`Support and contact for ${game.data.name}.`}
+>
+  <SupportContent game={game} />
+</LegalLayout>

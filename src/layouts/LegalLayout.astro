@@ -1,0 +1,96 @@
+---
+// Shared chrome for a game's legal pages (privacy policy, support). These are
+// publicly reachable by direct URL — App Store review needs that — but carry
+// `noindex` so they never show up in search; nothing on the site links to them
+// except the relevant game's product page.
+//
+// The page also ships the same click-to-reveal email mechanism as the homepage:
+// the address is base64 in the markup and only assembled in JS on click, so it
+// never reaches a scraper that finds the URL.
+import Base from './Base.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import RevealScript from '../components/RevealScript.astro';
+import { identity } from '../lib/site';
+import { slugOf, gamePath, type Game } from '../lib/games';
+
+interface Props {
+  game: Game;
+  /** Page heading, e.g. "Privacy Policy" or "Support". */
+  heading: string;
+  /** <title>/meta description. */
+  title: string;
+  description: string;
+}
+const { game, heading, title, description } = Astro.props;
+const slug = slugOf(game);
+---
+
+<Base title={title} description={description}>
+  <meta slot="head" name="robots" content="noindex, nofollow" />
+
+  <div id="top" class="min-h-screen bg-shell text-ink font-sans">
+    <SiteHeader>
+      <a
+        href={gamePath(slug)}
+        class="font-mono text-[12px] text-txt border border-edge-chip-strong px-3 py-[6px] rounded-[6px] no-underline transition-colors hover:border-acc hover:text-acc"
+        >‹ {game.data.name}</a
+      >
+    </SiteHeader>
+
+    <main class="mx-auto max-w-[760px] px-8 pt-20 pb-16">
+      <div class="font-mono text-[13px] text-acc mb-3">// {game.data.name}</div>
+      <h1 class="m-0 mb-8 text-[34px] sm:text-[40px] font-bold tracking-[-0.02em] text-heading">{heading}</h1>
+
+      <div class="legal-body text-[15.5px] leading-[1.7] text-body">
+        <slot />
+      </div>
+
+      <div class="font-mono text-[12px] text-faint mt-16 border-t border-edge pt-6">
+        © 2026 {identity.name} ·
+        <a href={gamePath(slug)} class="text-muted no-underline transition-colors hover:text-acc">{game.data.name}</a> ·
+        <a href="/" class="text-muted no-underline transition-colors hover:text-acc">portfolio</a>
+      </div>
+    </main>
+  </div>
+
+  <RevealScript />
+</Base>
+
+<style is:global>
+  .legal-body h2 {
+    margin: 1.8em 0 0.5em;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--color-heading, #eef7f0);
+  }
+  .legal-body p {
+    margin: 0 0 1em;
+  }
+  .legal-body ul {
+    margin: 0 0 1em;
+    padding-left: 1.2em;
+    list-style: none;
+  }
+  .legal-body li {
+    position: relative;
+    margin: 0.4em 0;
+  }
+  .legal-body li::before {
+    content: '–';
+    position: absolute;
+    left: -1.2em;
+    color: var(--color-acc, #33ff66);
+  }
+  .legal-body a {
+    color: var(--color-muted, #7e9b84);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .legal-body a:hover {
+    color: var(--color-acc, #33ff66);
+  }
+  .legal-body strong {
+    color: var(--color-heading, #eef7f0);
+    font-weight: 600;
+  }
+</style>

@@ -66,6 +66,15 @@
 
   input { outline: none; }
 
+  /* Visible keyboard-focus indicator for links and buttons. Uses :focus-visible
+     so it only shows for keyboard nav, and low-specificity :where() so anything
+     defining its own ring (e.g. the terminal) keeps it. */
+  :where(a, button):focus-visible {
+    outline: 2px solid var(--color-acc);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
   /* The terminal is mounted as a client:only island; let its own root box
      participate directly in the page layout so it fills the sizing wrapper. */
   astro-island { display: contents; }

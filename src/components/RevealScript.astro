@@ -1,0 +1,19 @@
+---
+// Shared click-to-reveal handler for base64-encoded contact links (email/phone).
+// The address/number is base64 in the markup (data-d / data-h) and only decoded
+// into a real link on an explicit click, so it never ships as plain text for
+// harvesters. Used wherever [data-reveal] buttons render (homepage, legal pages)
+// so the decode logic lives in exactly one place.
+---
+
+<script is:inline>
+  document.querySelectorAll('[data-reveal]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var a = document.createElement('a');
+      a.href = atob(btn.dataset.h);
+      a.textContent = atob(btn.dataset.d);
+      a.className = btn.dataset.revealClass || 'text-acc no-underline';
+      btn.replaceWith(a);
+    });
+  });
+</script>
