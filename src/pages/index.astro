@@ -29,6 +29,7 @@ const nav = [
   ...(games.length ? [{ href: '#games', label: 'games' }] : []),
   { href: '#skills', label: 'skills' },
   { href: '#contact', label: 'contact' },
+  { href: '/cv', label: 'cv' },
 ];
 
 // Section numbers (// NN) shift to stay sequential when the games section is
@@ -80,6 +81,11 @@ const secNo = {
           href="#contact"
           class="font-mono text-[13px] font-medium text-[#06140a] bg-acc px-[18px] py-[11px] rounded-[6px] no-underline transition-colors hover:bg-[#5cff85]"
           >get in touch</a
+        >
+        <a
+          href="/cv"
+          class="font-mono text-[13px] text-txt border border-edge-chip-strong px-[18px] py-[11px] rounded-[6px] no-underline transition-colors hover:border-acc hover:text-acc"
+          >download cv ↓</a
         >
         <a
           href={contact.github.url}
@@ -213,6 +219,7 @@ const secNo = {
         >reveal email ✉</button
       >
       <div class="flex flex-wrap justify-center items-center gap-6 font-mono text-[13px]">
+        <a href="/cv" class="text-muted no-underline transition-colors hover:text-acc">cv / résumé ↓</a>
         <a href={contact.github.url} class="text-muted no-underline transition-colors hover:text-acc">github ↗</a>
         {
           hasLinkedIn && (

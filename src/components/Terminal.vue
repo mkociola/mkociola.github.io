@@ -122,7 +122,7 @@ const files = [
   'contact.md',
 ];
 const CMDS = [
-  'about', 'cat', 'clear', 'contact', 'date', 'echo', 'email', 'exit', 'experience', 'games', 'guess',
+  'about', 'cat', 'clear', 'contact', 'cv', 'date', 'echo', 'email', 'exit', 'experience', 'games', 'guess',
   'help', 'history', 'ls', 'open', 'phone', 'projects', 'pwd', 'resume', 'skills', 'sudo', 'top', 'whoami',
 ];
 // Easter eggs — undocumented in `help`, listed by `cat .secrets`, and (since
@@ -498,9 +498,10 @@ function dispatch(cmd: string) {
       break;
     case 'resume':
     case 'cv':
-      selectByName('experience.json');
-      out.push([s('→ no PDF here — the CV lives in ', C.dim), s('experience.json', C.acc), s(' ↑ and on ', C.dim), s(githubShort, C.wht, 500)]);
-      break;
+      out.push([s('→ opening the CV — download as PDF from there...', C.dim)]);
+      pushMany(out);
+      T(() => { window.location.href = '/cv'; }, 500);
+      return;
     case 'email':
     case 'mail':
       out.push([s('✉  ', C.amb), s(atob(props.contact.emailDisplayB64), C.wht, 600), s('   — say hi.', C.dim)]);
@@ -795,7 +796,7 @@ const fileChips = computed(() =>
 // Tap-to-run command bar under the shell. Phone keyboards are awkward, so the
 // common commands are one tap away; `email` (absent from the file rail) surfaces
 // the reveal-on-demand contact, and `exit` leaves for the readable site.
-const cmdChips = ['help', 'ls', 'whoami', 'projects', 'games', 'skills', 'contact', 'email', 'date', 'guess', 'exit'];
+const cmdChips = ['help', 'ls', 'whoami', 'projects', 'games', 'skills', 'contact', 'cv', 'email', 'date', 'guess', 'exit'];
 function runCmd(cmd: string) {
   if (cmd.trim()) state.hist = state.hist.concat([cmd]);
   state.histIdx = -1;

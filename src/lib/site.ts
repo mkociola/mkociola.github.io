@@ -53,9 +53,9 @@ export const hasLinkedIn = !contact.linkedin.url.includes('REPLACE-ME');
 
 export const skillGroups = [
   { label: 'languages/', items: ['C / C++', 'Python', 'Bash', 'TypeScript', 'Swift'] },
-  { label: 'systems/', items: ['Linux (RHEL · SLES · Ubuntu)', 'Ansible', 'Docker', 'SR-IOV', 'GPU passthrough'] },
-  { label: 'web/', items: ['Vue', 'Astro', 'Node.js', 'Django'] },
-  { label: 'practice/', items: ['CI/CD · GitHub Actions', 'Fuzz testing', 'HPC', 'Kernel-level debug'] },
+  { label: 'systems/', items: ['Linux (RHEL · SLES · Ubuntu)', 'Ansible', 'Slurm', 'Docker', 'SR-IOV'] },
+  { label: 'web/', items: ['Astro', 'Tailwind', 'Vue', 'Node.js', 'Figma'] },
+  { label: 'practice/', items: ['CI/CD · GitHub Actions', 'Test automation', 'Fuzz testing', 'HPC'] },
 ] as const;
 
 /** Spoken languages — shown small on the readable site, as a line in the TUI. */
@@ -64,11 +64,29 @@ export const languages = [
   { name: 'English', level: 'fluent' },
 ] as const;
 
+/**
+ * Education — surfaced on the downloadable CV (`/cv`). Kept deliberately short:
+ * no degree, self-taught, which with the experience above is a strength to state
+ * plainly rather than a gap to hide.
+ */
+export const education = {
+  credential: 'Matura — Polish secondary-school diploma',
+  note: 'Software engineering: fully self-taught',
+} as const;
+
 /** About / hero prose, kept as paragraphs so both surfaces can reuse it. */
 export const about = {
   lead: 'GPU Software Engineer at Intel — Linux systems & developer tooling.',
   paragraphs: [
-    'I build test environments and automation close to the hardware: virtualization (SR-IOV, GPU passthrough), kernel-feature validation, and the Ansible/Bash/Python plumbing that ties it all together.',
+    'I build test environments and automation close to the hardware: virtualization (SR-IOV), validation, and the Ansible/Bash/Python plumbing that ties it all together.',
     'Off the clock I write web apps, poke at security, ride motorcycles and solve Rubik’s cubes.',
   ],
 } as const;
+
+/**
+ * Formal professional summary for the downloadable CV (`/cv`). Written in résumé
+ * voice (not the casual `about` prose) and deliberately confidentiality-safe —
+ * no internal product/process specifics, just transferable skills and scope.
+ */
+export const cvProfile =
+  'Self-taught software engineer with 4+ years building test automation, internal tooling, and CI/CD for validation-critical systems — currently automating GPU driver validation at Intel. Comfortable across Linux, Python, and Ansible as well as the full web stack; equally at home owning infrastructure or shipping a polished product end to end.';

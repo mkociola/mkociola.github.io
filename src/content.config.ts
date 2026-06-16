@@ -22,6 +22,15 @@ const work = defineCollection({
     summary: z.string(),
     /** Tech stack chips. */
     stack: z.array(z.string()).default([]),
+    /**
+     * Formal résumé voice for the downloadable CV (`/cv`). The site and terminal
+     * read the casual `summary` + Markdown body; the CV reads these instead so
+     * the two registers never have to compromise. All optional — the CV falls
+     * back to `role`/`summary` when a field is absent.
+     */
+    cvRole: z.string().optional(),
+    cvSummary: z.string().optional(),
+    cvHighlights: z.array(z.string()).default([]),
     /** Lower = higher on the page. */
     order: z.number(),
     /** Hide without deleting (e.g. drafts / TODO entries). */
