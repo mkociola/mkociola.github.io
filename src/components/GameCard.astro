@@ -2,6 +2,12 @@
 // A game showcase card — used on the homepage "Games" section and the /games
 // index. Mirrors the project-card look (bg-panel / border-edge-panel) but leads
 // with the app icon and a horizontal screenshot strip, since games are visual.
+//
+// Whole-card click: unlike a project card (a single <a> to the repo), a game has
+// several destinations (product page, privacy, support), and <a> can't nest. So
+// the name link uses the "stretched link" pattern — its ::after overlays the
+// whole (relative) card, making the entire surface open the product page — while
+// the privacy/support links sit above it (relative z-10) to stay clickable.
 import { Image } from 'astro:assets';
 import type { Game } from '../lib/games';
 import { slugOf, gamePath, privacyPath, supportPath } from '../lib/games';
@@ -15,21 +21,26 @@ const { name, tagline, blurb, platform, status, icon, screenshots } = game.data;
 const isLive = status === 'live';
 ---
 
-<article class="bg-panel border border-edge-panel rounded-[12px] p-[26px] transition-colors hover:border-acc">
+<article
+  class="relative bg-panel border border-edge-panel rounded-[12px] p-[26px] transition-colors hover:border-acc focus-within:border-acc"
+>
   <div class="flex items-start gap-4">
-    <a href={gamePath(slug)} class="shrink-0">
-      <Image
-        src={icon}
-        alt={`${name} app icon`}
-        width={120}
-        height={120}
-        densities={[2]}
-        class="w-[60px] h-[60px] rounded-[14px] border border-edge-panel"
-      />
-    </a>
+    <Image
+      src={icon}
+      alt={`${name} app icon`}
+      width={120}
+      height={120}
+      densities={[2]}
+      class="shrink-0 w-[60px] h-[60px] rounded-[14px] border border-edge-panel"
+    />
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-3 flex-wrap">
-        <a href={gamePath(slug)} class="text-[18px] font-semibold text-heading no-underline hover:text-acc">{name}</a>
+        {/* Primary link — its ::after stretches over the whole card. */}
+        <a
+          href={gamePath(slug)}
+          class="text-[18px] font-semibold text-heading no-underline hover:text-acc after:absolute after:inset-0 after:content-['']"
+          >{name}</a
+        >
         <span
           class:list={[
             'font-mono text-[11px] px-2 py-[2px] rounded-[4px] border',
@@ -48,22 +59,20 @@ const isLive = status === 'live';
     screenshots.length > 0 && (
       <div class="mt-5 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:thin]">
         {screenshots.map((shot) => (
-          <a href={gamePath(slug)} class="shrink-0">
-            <Image
-              src={shot.src}
-              alt={shot.alt}
-              width={320}
-              densities={[2]}
-              class="h-[300px] w-auto rounded-[10px] border border-edge-panel"
-            />
-          </a>
+          <Image
+            src={shot.src}
+            alt={shot.alt}
+            width={320}
+            densities={[2]}
+            class="shrink-0 h-[300px] w-auto rounded-[10px] border border-edge-panel"
+          />
         ))}
       </div>
     )
   }
 
-  <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[13px]">
-    <a href={gamePath(slug)} class="text-acc no-underline hover:underline">view details →</a>
+  {/* Secondary links sit above the stretched primary link so they stay clickable. */}
+  <div class="relative z-10 mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[13px] w-fit">
     <a href={privacyPath(slug)} class="text-muted no-underline transition-colors hover:text-acc">privacy</a>
     <a href={supportPath(slug)} class="text-muted no-underline transition-colors hover:text-acc">support</a>
   </div>
