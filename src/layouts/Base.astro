@@ -8,6 +8,7 @@ import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
 import '../styles/global.css';
 import { identity } from '../lib/site';
+import Analytics from '../components/Analytics.astro';
 
 interface Props {
   title?: string;
@@ -68,6 +69,9 @@ const ogImage = new URL(image, base);
     <meta name="twitter:image" content={ogImage} />
 
     <slot name="head" />
+
+    {/* Analytics last in <head>: on `/` the inline bot-guard redirects first. */}
+    <Analytics />
   </head>
   <body>
     <slot />

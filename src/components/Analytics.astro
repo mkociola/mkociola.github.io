@@ -1,0 +1,33 @@
+---
+/**
+ * Cloudflare Web Analytics beacon — privacy-friendly, cookieless page analytics.
+ *
+ * No cookies / no device storage → no consent banner required (ePrivacy), and
+ * no personal data is retained by default. Mounted once in Base.astro, so it
+ * covers every page (`/`, `/TUI`, `/cv`, `/games/*`).
+ *
+ * Get a token: Cloudflare dashboard → Analytics & Logs → Web Analytics →
+ * "Add a site" → copy the `token` value from the generated `data-cf-beacon`
+ * snippet. The token is NOT secret (it ships in the public HTML), so it lives
+ * here as plain config rather than an env secret.
+ *
+ * Reuse on a client site: copy this file and swap CF_BEACON_TOKEN.
+ *
+ * Renders nothing until a token is set AND the build is production, so:
+ *   - `astro dev` never beacons (no polluting your own data),
+ *   - an un-configured build still works (just emits no analytics).
+ */
+const CF_BEACON_TOKEN = 'b7ca0207fe15469bbd64641c0dea38dc'; // Cloudflare Web Analytics
+
+const enabled = import.meta.env.PROD && CF_BEACON_TOKEN.length > 0;
+---
+{
+  enabled && (
+    <script
+      is:inline
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={`{"token": "${CF_BEACON_TOKEN}"}`}
+    />
+  )
+}
